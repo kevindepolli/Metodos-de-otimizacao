@@ -150,6 +150,12 @@ class HeuristicaContrutivaAleatoria:
 
         return 0  # Máquina atual ainda tem espaço
 
+    def exibir_maquinas(self):
+        maquinas = []
+        for maquina in self.maquinas:
+            maquinas.append(list(maquina))
+
+        return maquinas
 
 def salvar_solucao(nome_arquivo, solucao):
     with open(nome_arquivo, 'a') as arquivo:
@@ -195,8 +201,8 @@ if __name__ == "__main__":
 
     heuristicaConstrutiva = HeuristicaContrutivaAleatoria(grafo, 4)
     print("-------------------------------")
-    print("Solução final:", heuristicaConstrutiva.maquinas, "\n", calcular_fo(heuristicaConstrutiva))
-    salvar_solucao(nome_arquivo_solucoes, heuristicaConstrutiva.maquinas)
+    print("Solução final:", heuristicaConstrutiva.exibir_maquinas(), "\n", calcular_fo(heuristicaConstrutiva))
+    salvar_solucao(nome_arquivo_solucoes, heuristicaConstrutiva.exibir_maquinas())
 
     busca_local(heuristicaConstrutiva)
-    print(heuristicaConstrutiva.maquinas, "\n", calcular_fo(heuristicaConstrutiva))
+    print(heuristicaConstrutiva.exibir_maquinas(), "\n", calcular_fo(heuristicaConstrutiva))
