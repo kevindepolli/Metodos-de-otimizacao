@@ -1,5 +1,6 @@
 import copy
 import random
+import time
 from collections import deque
 from functools import reduce
 
@@ -96,25 +97,19 @@ class HeuristicaContrutivaAleatoria:
         self.vertices_restantes = self.grafo.vertices - (self.vertices_maquinas * numero_maquinas)
         self.maquinas = [deque([vertice_inicial])]
 
-        print("Sequencia dos vertices:", sequencia_vertices)
         while sequencia_vertices:
             vertice_atual = sequencia_vertices.popleft()
             candidatos = self.sucessores_viaveis(vertice_atual)
-            print("-------------------------------")
-            print("Solução:", self.solucao)
-            print("Vértice analisado:", vertice_atual)
 
             if vertice_atual not in self.solucao:
                 self.adicionar_vertice_solucao(vertice_atual)
-
-            print("Candidatos:", candidatos)
 
             while candidatos:
                 vertice_candidato_escolhido = escolha_aleatoria(candidatos)
                 self.adicionar_vertice_solucao(vertice_candidato_escolhido)
                 candidatos.remove(vertice_candidato_escolhido)
 
-        self.fo = calcular_fo(self)
+        self.fo = calcular_fo(self.maquinas, self.grafo.pesos)
 
     def sucessores_viaveis(self, vertice):
         candidatos = self.grafo.vertices_sucessores(vertice)
@@ -134,11 +129,22 @@ class HeuristicaContrutivaAleatoria:
         self.adicionar_vertice_maquina(vertice)
 
     def adicionar_vertice_maquina(self, vertice):
-        match self.maquina_lotada():
-            case 0:
-                self.maquinas[-1].append(vertice)  # Adiciona vertice na máquina atual
-            case 1:
-                self.maquinas.append(deque([vertice]))  # Cria uma nova máquina
+        if len(self.maquinas) < self.numero_maquinas:
+            # Se o número de máquinas é menor que o número total de máquinas
+            if len(self.maquinas[-1]) >= self.vertices_maquinas:
+                # Se a última máquina está cheia, cria uma nova máquina
+                self.maquinas.append(deque([vertice]))
+            else:
+                # Caso contrário, adiciona o vértice à última máquina
+                self.maquinas[-1].append(vertice)
+        else:
+            # Se o número de máquinas é igual ao número total de máquinas
+            if len(self.maquinas[-1]) < self.vertices_maquinas + self.vertices_restantes:
+                # Se a última máquina ainda pode receber mais vértices
+                self.maquinas[-1].append(vertice)
+            else:
+                # Caso contrário, cria uma nova máquina
+                self.maquinas.append(deque([vertice]))
 
     def maquina_lotada(self):
         if (len(self.maquinas) == self.numero_maquinas  # Verifica se essa máquina é a última
@@ -150,59 +156,75 @@ class HeuristicaContrutivaAleatoria:
 
         return 0  # Máquina atual ainda tem espaço
 
-    def exibir_maquinas(self):
-        maquinas = []
-        for maquina in self.maquinas:
-            maquinas.append(list(maquina))
+    def exibir_resultado(self):
+        for i, maquina in enumerate(self.maquinas, start=1):
+            print(f"Máquina {i}: {list(maquina)}")
+        print("FO: ", heuristicaConstrutiva.fo)
 
-        return maquinas
+    def salvar_solucao(self, nome_arquivo):
+        with open(nome_arquivo, 'a') as arquivo:
+            for i, maquina in enumerate(self.maquinas, start=1):
+                linha = f"Máquina {i}: {list(maquina)}" + '\n'
+                arquivo.write(linha)
+            fo = f"FO: {self.fo}"
+            arquivo.write(fo)
 
-def salvar_solucao(nome_arquivo, solucao):
-    with open(nome_arquivo, 'a') as arquivo:
-        # Transforma a lista em uma string separada por vírgulas
-        linha = ','.join(map(str, solucao)) + '\n'
-        arquivo.write(linha)
 
-
-def calcular_fo(heuristica):
-    pesos = heuristica.grafo.pesos
-    maquinas = heuristica.maquinas
-    maquinas_pesos = []
-    soma = 0
-    for maquina in maquinas:
-        for tarefa in maquina:
-            soma += pesos[tarefa]
-        maquinas_pesos.append(soma)
-        soma = 0
+def calcular_fo(maquinas, pesos):
+    maquinas_pesos = [sum(pesos[tarefa] for tarefa in maquina) for maquina in maquinas]
     return max(maquinas_pesos)
 
 
+def vizinho(maquinas, maquina):
+    if maquina == len(maquinas) - 1:
+        if len(maquinas[maquina]) < len(maquinas[0]):
+            if maquinas[0]:
+                maquinas[maquina].append(maquinas[0].popleft())
+    else:
+        if len(maquinas[maquina]) > 0:
+            if maquinas[maquina + 1]:
+                maquinas[maquina + 1].append(maquinas[maquina].popleft())
+    return maquinas
+
+
+def ultima_maquina(lista, indice):
+    if indice == len(lista) - 1:
+        return True
+    else:
+        return False
+
+
 def busca_local(heuristica):
-    maquinas = heuristica.maquinas
-
-    for maquina in range(len(maquinas) - 1):
-        maquinas[maquina].append(maquinas[maquina+1].popleft())
-
-    maquinas[-1].append(maquinas[0].popleft())
+    pesos = heuristica.grafo.pesos
+    melhor_solucao = heuristica.maquinas
+    fo_melhor = heuristica.fo
+    for i in range(len(heuristica.maquinas)):
+        solucao_atual = vizinho(copy.deepcopy(melhor_solucao), i)
+        fo_atual = calcular_fo(solucao_atual, pesos)
+        fo_melhor = calcular_fo(melhor_solucao, pesos)
+        if fo_atual < fo_melhor:
+            melhor_solucao = solucao_atual
+    heuristica.maquinas = melhor_solucao
+    heuristica.fo = fo_melhor
 
 
 if __name__ == "__main__":
+    inicio = time.time()
     nome_arquivo_grafo = "grafos/HAHN.IN2"
     # nome_arquivo_grafo = "grafos/grafo.txt"
     nome_arquivo_solucoes = "solucoes.txt"
 
     grafo = Grafo(nome_arquivo_grafo)
 
-    print("Matriz de adjacência:")
-    grafo.imprimir_matriz_adjacencia()
-
-    print("Pesos dos vértices:")
-    print(grafo.pesos)
-
     heuristicaConstrutiva = HeuristicaContrutivaAleatoria(grafo, 4)
-    print("-------------------------------")
-    print("Solução final:", heuristicaConstrutiva.exibir_maquinas(), "\n", calcular_fo(heuristicaConstrutiva))
-    salvar_solucao(nome_arquivo_solucoes, heuristicaConstrutiva.exibir_maquinas())
 
     busca_local(heuristicaConstrutiva)
-    print(heuristicaConstrutiva.exibir_maquinas(), "\n", calcular_fo(heuristicaConstrutiva))
+    heuristicaConstrutiva.fo = calcular_fo(heuristicaConstrutiva.maquinas, heuristicaConstrutiva.grafo.pesos)
+
+    heuristicaConstrutiva.salvar_solucao(nome_arquivo_solucoes)
+    heuristicaConstrutiva.exibir_resultado()
+
+    fim = time.time()
+
+    tempo_execucao = fim - inicio
+    print(f"Tempo de execução: {tempo_execucao:.6f} segundos")
