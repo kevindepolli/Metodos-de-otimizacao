@@ -76,15 +76,16 @@ class Maquina:
                 candidatos_viaveis.append(candidato)
         return candidatos_viaveis
 
-    def calcular_fo(self, maquinas, pesos):
-        maquinas_pesos = [sum(pesos[tarefa] for tarefa in maquina) for maquina in maquinas]
-        return max(maquinas_pesos)
-
     def ultima_maquina(self, lista, indice):
         if indice == len(lista) - 1:
             return True
         else:
             return False
+
+
+def calcular_fo(maquinas, pesos):
+    maquinas_pesos = [sum(pesos[tarefa] for tarefa in maquina) for maquina in maquinas]
+    return max(maquinas_pesos)
 
 
 def escolha_aleatoria(lista):

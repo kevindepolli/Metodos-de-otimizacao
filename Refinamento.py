@@ -1,4 +1,4 @@
-def vizinho(maquinas, maquina):
+def vizinho(maquinas: object, maquina: object) -> object:
     if maquina == len(maquinas) - 1:
         if len(maquinas[maquina]) < len(maquinas[0]):
             if maquinas[0]:

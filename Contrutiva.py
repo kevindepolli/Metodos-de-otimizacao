@@ -1,7 +1,7 @@
 from collections import deque
 
 from Grafo import Grafo
-from Maquina import Maquina
+from Maquina import Maquina, calcular_fo
 
 
 class Construtiva:
@@ -22,7 +22,7 @@ class Construtiva:
                 self.adicionar_vertice_solucao_atualizar_candidatos(self.candidatos.popleft())
                 escolher_maior_peso = True
 
-        self.maquina.fo = self.maquina.calcular_fo(self.maquina.maquinas, self.grafo.pesos)
+        self.maquina.fo = calcular_fo(self.maquina.maquinas, self.grafo.pesos)
 
     def adicionar_vertice_solucao_atualizar_candidatos(self, vertice):
         # TODO: implementar um exception handler para quando o vertice não for adicionado try catch
